@@ -10,26 +10,26 @@
 
   function pingController($http, authService) {
 
-    var API_URL = 'http://localhost:3001/api';
+    var API_URL = 'http://localhost:8081';
     var vm = this;
     vm.auth = authService;
-    vm.message = '';
+    vm.data = '';
 
     vm.ping = function() {
-      vm.message = '';
-      $http.get(API_URL + '/public').then(function(result) {
-        vm.message = result.data.message;
+      vm.data = '';
+      $http.get(API_URL + '/8d30b54c').then(function(result) {
+        vm.data = result.data;
       }, function(error) {
-        vm.message = error;
+        vm.data = error;
       });
     }
 
     vm.securedPing = function() {
-      vm.message = '';
-      $http.get(API_URL + '/private').then(function(result) {
-        vm.message = result.data.message;
+      vm.data = '';
+      $http.get(API_URL + '/settings/account/search').then(function(result) {
+        vm.data = result.data;
       }, function(error) {
-        vm.message = error.data.message || error.data;
+        vm.data = error.data || error.data;
       });
     }
 

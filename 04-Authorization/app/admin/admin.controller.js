@@ -11,14 +11,14 @@
   function adminController($http) {
 
     var vm = this;
-    var API_URL = 'http://localhost:3001/api';
+    var API_URL = 'http://localhost:8081';
     
     vm.adminPing = function() {
-      vm.message = '';
-      $http.post(API_URL + '/admin').then(function(result) {
-        vm.message = result.data.message;
+      vm.data = '';
+      $http.post(API_URL + '/settings').then(function(result) {
+        vm.data = result.data;
       }, function(error) {
-        vm.message = error.data.message;
+        vm.data = error.data;
       });
     }
 

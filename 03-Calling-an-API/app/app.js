@@ -57,7 +57,7 @@
       responseType: 'token id_token',
       audience: AUTH0_AUDIENCE,
       redirectUri: AUTH0_CALLBACK_URL,
-      scope: 'openid profile read:messages'
+      scope: 'openid profile email'
     });
 
     jwtOptionsProvider.config({

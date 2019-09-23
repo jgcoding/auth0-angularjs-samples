@@ -10,19 +10,19 @@
 
   function authService($state, angularAuth0, $timeout) {
 
-    var userProfile;
+    var userProfile, tokenRenewalTimeout;
 
     function login() {
       angularAuth0.authorize();
     }
-    
+
     function handleAuthentication() {
-      angularAuth0.parseHash(function(err, authResult) {
+      angularAuth0.parseHash(function (err, authResult) {
         if (authResult && authResult.idToken) {
           setSession(authResult);
           $state.go('home');
         } else if (err) {
-          $timeout(function() {
+          $timeout(function () {
             $state.go('home');
           });
           console.log(err);
@@ -36,7 +36,7 @@
       if (!accessToken) {
         throw new Error('Access token must exist to fetch profile');
       }
-      angularAuth0.client.userInfo(accessToken, function(err, profile) {
+      angularAuth0.client.userInfo(accessToken, function (err, profile) {
         if (profile) {
           setUserProfile(profile);
         }
@@ -53,6 +53,8 @@
     }
 
     function setSession(authResult) {
+      // Set isLoggedIn flag in localStorage
+      localStorage.setItem('isLoggedIn', 'true');
       // Set the time that the access token will expire at
       let expiresAt = JSON.stringify((authResult.expiresIn * 1000) + new Date().getTime());
 
@@ -66,17 +68,20 @@
       localStorage.setItem('id_token', authResult.idToken);
       localStorage.setItem('expires_at', expiresAt);
       localStorage.setItem('scopes', JSON.stringify(scopes));
+      scheduleRenewal();
     }
-    
+
     function logout() {
-      // Remove tokens and expiry time from localStorage
+      // Remove tokens, expiry time, & isLoggedIn flag from localStorage
+      localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('access_token');
       localStorage.removeItem('id_token');
       localStorage.removeItem('expires_at');
       localStorage.removeItem('scopes');
+      clearTimeout(tokenRenewalTimeout);
       $state.go('home');
     }
-    
+
     function isAuthenticated() {
       // Check whether the current time is past the 
       // access token's expiry time
@@ -94,6 +99,32 @@
       return true;
     }
 
+    function renewToken() {
+      angularAuth0.checkSession({},
+        function (err, result) {
+          if (err) {
+            alert(
+              'Could not get a new token. ' +
+              err.description
+            );
+          } else {
+            setSession(result);
+            alert('Successfully renewed auth!');
+          }
+        }
+      );
+    }
+
+    function scheduleRenewal() {
+      var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
+      var delay = expiresAt - Date.now();
+      if (delay > 0) {
+        tokenRenewalTimeout = setTimeout(function () {
+          renewToken();
+        }, delay);
+      }
+    }
+
     return {
       login: login,
       getProfile: getProfile,
@@ -101,7 +132,9 @@
       handleAuthentication: handleAuthentication,
       logout: logout,
       isAuthenticated: isAuthenticated,
-      userHasScopes: userHasScopes
+      userHasScopes: userHasScopes,
+      renewToken: renewToken,
+      scheduleRenewal: scheduleRenewal
     }
   }
 })();
